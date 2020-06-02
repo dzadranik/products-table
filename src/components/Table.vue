@@ -4,7 +4,7 @@
             tr
                 th 
                     input(type="checkbox" v-model="checked") 
-                th(v-for="item in productMatrix" :key="item") {{item[1]}}
+                th(v-for="item in productMatrix" :key="item.value" v-if="item.checked === true") {{item.name}}
                 th
         TableColumn(v-for="product in products" :product="product" :key="product.id")
 </template>
@@ -17,6 +17,11 @@ export default {
     name: "Table",
     components: {
         TableColumn
+    },
+    data() {
+        return {
+            checked: false
+        };
     },
     computed: {
         ...mapState(["productMatrix"]),

@@ -41,6 +41,6 @@ export default {
 
 <style lang="sass">
 @import sass/reset.css
-@import sass/mixins
 @import sass/main
+
 </style>

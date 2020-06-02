@@ -2,9 +2,9 @@
     .settings
         div Sorting by:
         div
-            button(v-for="item in productMatrix" :key="item") {{item[1]}}
+            button(v-for="item in columnButtons" :key="item.value" :class="{active : activeButton === item.value}" :data-value="item.value" @click="changeFirstColumn($event), activeButton = item.value") {{item.name}}
 
-        button Delete {{productsToDelete.length}}
+        button(:class="{active : productsToDelete.length > 0}") Delete ({{productsToDelete.length}})
 
         select(@change="changeTotalVisible")
             option(value="10") 10
@@ -18,25 +18,23 @@
 
         button(@click="changePage" data-value="next")
             include ../assets/svg/next.svg
-
-        multiselect(
-            v-model="value",
-            :options="options",
-            :multiple="true",
-            :close-on-select="false",
-            :clear-on-select="false",
-            :preserve-search="true",
-            placeholder="Pick some"
-            label="name",
-            track-by="name",
-            :preselect-first="true"
-        )
-            template(
-            slot="selection"
-            slot-scope="{ values, search, isOpen }"
+        div
+            multiselect(
+                placeholder="Pick at least one",
+                select-label="Enter doesn’t work here!",
+                v-model="value",
+                :options="columnOptions",
+                :multiple="true",
+                :searchable="false"
+                :close-on-select="false",
+                :clear-on-select="false",
+                :preserve-search="false",
+                label="name",
+                track-by="value",
+                :preselect-first="true"
             )
-            span.multiselect__single(v-if="values.length && !isOpen")
-                | {{ values.length }} options selected
+                template(slot="selection", slot-scope="{values}")
+                    span.multiselect__single {{ values.length }} columns selected
 
 
 </template>
@@ -53,18 +51,16 @@ export default {
     data() {
         return {
             value: [],
-            options: [
-                { name: "Vue.js", language: "JavaScript" },
-                { name: "Adonis", language: "JavaScript" },
-                { name: "Rails", language: "Ruby" },
-                { name: "Sinatra", language: "Ruby" },
-                { name: "Laravel", language: "PHP" },
-                { name: "Phoenix", language: "Elixir" }
-            ]
+            columnButtons: { ...this.$store.state.productMatrix },
+            columnOptions: [
+                { value: "all", name: "Select All", checked: true },
+                ...this.$store.state.productMatrix
+            ],
+            activeButton: ""
         };
     },
     computed: {
-        ...mapState(["productsToDelete", "productMatrix"]),
+        ...mapState(["productsToDelete"]),
         firstProduct: function() {
             return this.$store.getters.firstProduct;
         },
@@ -81,16 +77,35 @@ export default {
         },
         changeTotalVisible: function(e) {
             this.$store.commit("changeTotalVisible", e.currentTarget.value);
+        },
+        changeFirstColumn: function(e) {
+            this.$store.commit(
+                "changeFirstColumn",
+                e.currentTarget.dataset.value
+            );
         }
     }
 };
 </script>
 
-<style lang="sass" scoped>
+<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+<style lang="sass">
+@import ../sass/mixins
 .settings
     display: flex
     justify-content: space-between
+    align-items: center
     margin-bottom: 20px
 button
     fill: #333333
+    background: transparent
+    border: 0
+    padding: 5px 10px
+    margin: 0 5px
+    color: $color-default
+    border-radius: 2px
+    &.active
+        background: $color-green
+        color: $color-white
+        
 </style>

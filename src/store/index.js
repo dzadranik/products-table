@@ -8,12 +8,12 @@ export default new Vuex.Store({
     state: {
         products: [],
         productMatrix: [
-            ['product', 'Product(100g serving)', true],
-            ['calories', 'Calories', true],
-            ['fat', 'Fat (g)', true],
-            ['carbs', 'Carbs (g)', true],
-            ['protein', 'Protein (g)', true],
-            ['iron', 'Iron (%)', true]
+            { 'value': 'product', 'name': 'Product(100g serving)', 'checked': true },
+            { 'value': 'calories', 'name': 'Calories', 'checked': true },
+            { 'value': 'fat', 'name': 'Fat (g)', 'checked': true },
+            { 'value': 'carbs', 'name': 'Carbs (g)', 'checked': true },
+            { 'value': 'protein', 'name': 'Protein (g)', 'checked': true },
+            { 'value': 'iron', 'name': 'Iron (%)', 'checked': true }
         ],
         productsToDelete: [],
         loadAgain: false,
@@ -75,6 +75,13 @@ export default new Vuex.Store({
         changeTotalVisible(state, value) {
             state.totalVisible = +value
             state.pageNumber = 0
+        },
+
+        changeFirstColumn(state, value) {
+            let index = state.productMatrix.findIndex(item => item.value === value);
+            [state.productMatrix[0], state.productMatrix[index]] = [state.productMatrix[index], state.productMatrix[0]]
+            state.productMatrix.push()
+            // state.productMatrix[index].checked = !state.productMatrix[index].checked
         }
     },
 })
