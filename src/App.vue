@@ -3,7 +3,7 @@
         h1  Table
         
         Loader( v-if="!isLoad && !loadAgain")
-        button(@click="getProducts" v-if="loadAgain") Попробовать еще раз...
+        button(@click="getProducts" v-if="loadAgain") Load again...
 
         Settings(v-if="isLoad")
         Table(v-if="isLoad")
@@ -42,5 +42,4 @@ export default {
 <style lang="sass">
 @import sass/reset.css
 @import sass/main
-
 </style>

@@ -1,16 +1,18 @@
 <template lang="pug">
-    tr(@click="changeChecket")
+    tr
         td
-            input(type="checkbox" v-model="checked") 
-        td(v-for="item in productMatrix" :key="item.value" v-if="item.checked === true") {{product[item.value]}}
+            .table__checkbox(@click="changeChecked" :class="{checked : this.checked}")
 
-        td 
-            button(v-if="this.checked") Delete
-                include ../assets/svg/basket.svg 
+        td(v-for="item in productMatrix" v-if="item.checked === true" :class="'table__' + item.value" :key="item.value") {{product[item.value]}}
+
+        td
+            button.table__delete Delete
+                //- include ../assets/svg/basket.svg 
 </template>
 
 <script>
 import { mapState } from "vuex";
+import { mapMutations } from "vuex";
 
 export default {
     name: "TableColumn",
@@ -22,9 +24,11 @@ export default {
         ...mapState(["productMatrix"])
     },
     methods: {
-        changeChecket: function() {
+        ...mapMutations(["changeDeleteArray"]),
+
+        changeChecked: function() {
             this.checked = !this.checked;
-            this.$store.commit("changeDeleteArray", this.product.id);
+            this.changeDeleteArray(this.product.id);
         }
     }
 };
