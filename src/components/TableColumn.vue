@@ -1,34 +1,44 @@
 <template lang="pug">
-    tr
+    tr(:class="{active: product.id === deleteOneId}")
         td
-            .table__checkbox(@click="changeChecked" :class="{checked : this.checked}")
+            .table__checkbox(@click="changeChecked" :class="{'checked' : checked}")
 
         td(v-for="item in productMatrix" v-if="item.checked === true" :class="'table__' + item.value" :key="item.value") {{product[item.value]}}
 
         td
-            button.table__delete Delete
-                //- include ../assets/svg/basket.svg 
+            button.table__button-delete(@click="showConfirm({'event': $event, 'id': product.id})" data-button="delete") delete
 </template>
 
 <script>
 import { mapState } from "vuex";
 import { mapMutations } from "vuex";
+import { mapGetters } from "vuex";
 
 export default {
     name: "TableColumn",
     props: ["product"],
-    data() {
-        return { checked: false };
-    },
     computed: {
-        ...mapState(["productMatrix"])
+        ...mapState(["productMatrix", "deleteOneId"]),
+        ...mapGetters(["isCheckToDelete"]),
+        checked: function() {
+            return this.isCheckToDelete(this.product.id);
+        }
     },
     methods: {
-        ...mapMutations(["changeDeleteArray"]),
+        ...mapMutations(["changeDeleteArray", "showConfirm"]),
 
         changeChecked: function() {
-            this.checked = !this.checked;
-            this.changeDeleteArray(this.product.id);
+            if (!this.checked) {
+                this.changeDeleteArray({
+                    id: [this.product.id],
+                    action: "add"
+                });
+            } else {
+                this.changeDeleteArray({
+                    id: [this.product.id],
+                    action: "remove"
+                });
+            }
         }
     }
 };

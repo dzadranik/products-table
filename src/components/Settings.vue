@@ -1,54 +1,58 @@
 <template lang="pug">
     .settings
-        div Sorting by:
-        div
-            button(v-for="item in columnButtons" v-if="item.checked" :key="item.value" :class="{active : activeButton === item.value}" :data-value="item.value" @click="changeFirstColumn($event), activeButton = item.value") {{item.name}}
+        .settings__sorting
+            .settings__sorting-title Sorting by:
+            button(v-for="button in sortingButtons" :disabled="!button.checked" :key="button.value" :class="{active : sortingActive === button.value}" :data-value="button.value" @click="changeFirstColumn") {{button.name}}
 
-        button(:class="{active : productsToDelete.length > 0}") Delete ({{productsToDelete.length}})
-        div
+        button.settings__button-delete(@click="showConfirm({'event': $event})" data-button="delete" :disabled="productsToDelete.length === 0 || !isVisibleColumn") Delete {{totalDeletedProducts}}
+        
+        .settings__total-visible
             multiselect(
                 @input="changeTotalVisible"
-                v-model="valueTotal"
-                :options="optionsTotal"
+                v-model="totalVisibleModel"
+                :options="totalVisibleOptions"
                 :searchable="false"
                 :close-on-select="true"
                 :show-labels="false"
                 :preselect-first="true"
                 :allow-empty="false"
+                :disabled="!isVisibleColumn"
+                placeholder=""
             )
-                template(slot="selection" slot-scope="{ values }")
-                    span.multiselect__single(v-if="values") {{ values }} Per Page
+                template(slot="singleLabel" slot-scope="{ option }")
+                    span.multiselect__single {{ option }} Per Page
 
-        button(@click="changePage" data-value="prev")
-            include ../assets/svg/prev.svg
+        .settings__paging-nav
+            button.settings__paging-button.settings__paging-button--prev(@click="changePageNumber" :disabled="firstProduct === 0 || !isVisibleColumn" data-value="prev")
+                include ../assets/svg/prev.svg
 
-        div {{firstProduct + 1}} - {{lastProduct}} of {{totalProducts}}
+            .settings__paging-title 
+                b {{firstProduct + 1}}-{{lastProduct}} 
+                | of 
+                b {{totalProducts}}
 
-        button(@click="changePage" data-value="next")
-            include ../assets/svg/next.svg
-        
-        .settings__column-select
+            button.settings__paging-button.settings__paging-button--next(@click="changePageNumber"  :disabled="lastProduct === totalProducts || !isVisibleColumn" data-value="next")
+                include ../assets/svg/next.svg
+            
+        .settings__select-column
             multiselect(
                 @input="changeDisplayColumn"
-                v-model="hideColumn"
-                :options="columnOptions"
+                v-model="columnsVisibleModel"
+                :options="columnsVisibleOptions"
                 :multiple="true"
                 :searchable="false"
                 :close-on-select="false"
-                :preserve-search="false"
                 :showLabels="false"
                 label="name",
                 track-by="value",
-                placeholder="Select column"
+                placeholder="Select columns"
             )
                 template(slot="option", slot-scope="{ option }", dala-selected="option.checked")
-                    .settings__option
-                        .settings__checkbox
+                    .settings__select-option
+                        .settings__select-checkbox
                         span {{ option.name }}
                 template(slot="selection")
-                    span.multiselect__single(v-if="selectionValues") {{ selectionValues }} columns selected
-
-
+                    span.multiselect__single(v-if="columnsVisibleValue") {{ columnsVisibleValue }} columns selected
 </template>
 
 <script>
@@ -64,57 +68,105 @@ export default {
     },
     data() {
         return {
-            columnButtons: { ...this.$store.state.productMatrix },
-            optionsTotal: ["10", "15", "20"],
-            valueTotal: "",
-            activeButton: "product",
-            hideColumn: [
-                { value: "all", name: "Select All" },
+            sortingButtons: { ...this.$store.state.productMatrix },
+
+            totalVisibleOptions: ["10", "15", "20"],
+            totalVisibleModel: "",
+
+            columnsVisibleOptions: [
+                { value: "all", name: "Select All", checked: "checked" },
                 ...this.$store.state.productMatrix
             ],
-            columnOptions: [
+            columnsVisibleModel: [
                 { value: "all", name: "Select All" },
                 ...this.$store.state.productMatrix
             ]
         };
     },
     computed: {
-        ...mapState(["productsToDelete"]),
-        ...mapGetters(["firstProduct", "lastProduct", "totalProducts"]),
+        ...mapState(["productsToDelete", "sortingActive"]),
+        ...mapGetters([
+            "firstProduct",
+            "lastProduct",
+            "totalProducts",
+            "isVisibleColumn"
+        ]),
 
-        selectionValues: function() {
-            if (this.hideColumn.length === this.columnOptions.length) {
-                return this.hideColumn.length - 1;
+        columnsVisibleValue: function() {
+            if (
+                this.columnsVisibleModel.length ===
+                this.columnsVisibleOptions.length
+            ) {
+                return this.columnsVisibleModel.length - 1;
             }
-            return this.hideColumn.length;
+            return this.columnsVisibleModel.length;
+        },
+        totalDeletedProducts: function() {
+            if (this.productsToDelete.length !== 0) {
+                return `(${this.productsToDelete.length})`;
+            }
+            return "";
         }
     },
     methods: {
         ...mapMutations([
-            "CHANGE_PAGE",
+            "CHANGE_PAGE_NUMBER",
             "CHANGE_TOTAL_VISIBLE",
-            "CHANGE_FIRST_COLUMN"
+            "CHANGE_FIRST_COLUMN",
+            "CHANGE_DISPLAY_COLUMN",
+            "showConfirm"
         ]),
-        changePage: function(e) {
-            this.CHANGE_PAGE(e.currentTarget.dataset.value);
+        changePageNumber: function(e) {
+            this.CHANGE_PAGE_NUMBER(e.currentTarget.dataset.value);
         },
         changeTotalVisible: function() {
-            this.CHANGE_TOTAL_VISIBLE(this.valueTotal);
+            this.CHANGE_TOTAL_VISIBLE(this.totalVisibleModel);
         },
         changeFirstColumn: function(e) {
             this.CHANGE_FIRST_COLUMN(e.currentTarget.dataset.value);
         },
+
         changeDisplayColumn: function() {
-            let allIndex = this.hideColumn.findIndex(
-                item => item.value === "all"
-            );
-            if (allIndex !== -1 && this.hideColumn.length < 6) {
-                this.hideColumn = this.columnOptions;
-            } else if (allIndex === -1 && this.hideColumn.length === 6) {
-                this.hideColumn = [];
-            } else if (allIndex !== -1 && this.hideColumn.length === 6) {
-                this.hideColumn.splice(allIndex, 1);
+            //refact ---- !!!!!! ??includes
+            let allIndex = this.columnsVisibleModel.findIndex(
+                    item => item.value === "all"
+                ),
+                allChecked = this.columnsVisibleOptions[0].checked,
+                modelLength = this.columnsVisibleModel.length;
+
+            if (
+                allIndex === -1 &&
+                allChecked === "checked" &&
+                modelLength >= 6
+            ) {
+                this.columnsVisibleModel = [];
+                this.columnsVisibleOptions[0].checked = "unchecked";
+            } else if (
+                allIndex !== -1 &&
+                allChecked === "checked" &&
+                modelLength === 6
+            ) {
+                this.columnsVisibleModel.splice(allIndex, 1);
+                this.columnsVisibleOptions[0].checked = "unchecked";
+            } else if (
+                allIndex !== -1 &&
+                allChecked === "unchecked" &&
+                modelLength <= 6
+            ) {
+                this.columnsVisibleModel = this.columnsVisibleOptions;
+                this.columnsVisibleOptions[0].checked = "checked";
+            } else if (
+                allIndex === -1 &&
+                allChecked === "unchecked" &&
+                modelLength === 6
+            ) {
+                this.columnsVisibleModel = this.columnsVisibleOptions;
+                this.columnsVisibleOptions[0].checked = "checked";
             }
+            let columnsValues = this.columnsVisibleModel.map(
+                item => item.value
+            );
+            this.CHANGE_DISPLAY_COLUMN(columnsValues);
         }
     }
 };
@@ -123,62 +175,59 @@ export default {
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 <style lang="sass">
 @import ../sass/mixins
+@import ../sass/multiselect
+
 .settings
     display: flex
     justify-content: space-between
     align-items: center
     margin-bottom: 20px
-    &__column-select
-        .multiselect
-            width: 195px
-    &__option
-        display: flex
-    &__checkbox
-        margin: 1px 10px 0 0
-        +checkbox
 
-        
-button
-    background: transparent
-    border: 0
-    padding: 5px 10px
-    margin: 0 5px
-    color: $color-default
-    border-radius: 2px
-    &.active
+    &__sorting
+        margin-right: auto
+        display: flex
+        align-items: center
+        button
+            margin: 0
+            border-color: transparent
+            padding-left: 6px
+            padding-right: 6px
+
+    &__sorting-title
+        margin-right: 10px
+        font-weight: 600
+
+    &__button-delete:not(:disabled)
         background: $color-green
+        border-color: $color-green
         color: $color-white
 
+    &__total-visible
+        width: 115px
+        margin-right: 10px
 
-.multiselect__tags
-    padding: 6px 20px 0 6px
+    &__paging-nav
+        display: flex
+        align-items: center
 
-.multiselect__select
-    background: url(~@/assets/svg/select-arrow.svg) no-repeat center center
-    width: 10px
-    height: 8px
-    top: 15px
-    right: 3px
-    &:before
-        display: none
+    &__paging-button
+        padding-left: 14px
+        padding-right: 14px
+        fill: $color-default
+    
+    &__paging-title
+        margin-right: 10px
 
-.multiselect__single,
-.multiselect__placeholder
-    font-size: 14px
-    line-height: 24px
-    padding-left: 5px
-    margin-bottom: 8px
-    min-height: 20px
-    padding-top: 0
+    &__select-column
+        .multiselect
+            width: 160px
 
-.multiselect__option--highlight
-    background: rgba(0, 161, 30, 0.07) !important
-    color: $color-default !important
+    &__select-option
+        display: flex
+        padding-left: 5px
 
-.multiselect__option--selected
-    background: transparent
+    &__select-checkbox
+        margin: 5px 10px 0 0
+        +checkbox
 
-    .settings__checkbox
-        background: $color-green url(~@/assets/svg/checked.svg) no-repeat center center
-        border-color: $color-green
 </style>

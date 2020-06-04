@@ -1,0 +1,65 @@
+.multiselect,
+.multiselect__tags
+    min-height: 35px
+    border-radius: 2px
+
+.multiselect--active .multiselect__tags
+    border-bottom-left-radius: 2px !important
+    border-bottom-right-radius: 2px !important
+
+.multiselect__tags
+    padding: 4px 20px 0 6px
+    border-color: $color-border
+
+.multiselect--disabled .multiselect__select,
+.multiselect__select
+    background-image: url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7.0625 0L8 0.9375L4 4.9375L0 0.9375L0.9375 0L4 3.0625L7.0625 0Z' fill='%235B5E77' /%3E%3C/svg%3E%0A") 
+    background-repeat: no-repeat
+    background-position: center center
+    width: 10px
+    height: 8px
+    top: 13px
+    right: 3px
+    &:before
+        display: none
+
+.multiselect__single,
+.multiselect__placeholder
+    font-size: 14px
+    line-height: 24px
+    padding: 0 0 0 5px
+    margin: 0
+    min-height: 20px
+
+.multiselect__content-wrapper
+    min-width: 100%
+    width: auto
+    border-top: 1px solid $color-border
+    border-color: $color-border
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.16)
+    border-radius: 4px
+    margin-top: 10px
+    border-radius: 2px
+
+.multiselect__element:first-child .settings__select-option span
+    font-weight: bold
+
+
+.multiselect__option
+    font-size: 14px
+    line-height: 24px
+    padding: 8px
+    min-height: 35px
+
+.multiselect__option--highlight
+    background: rgba(0, 161, 30, 0.07) !important
+    color: $color-default !important
+
+.multiselect__option--selected
+    background: transparent
+
+    .settings__select-checkbox
+        +checkbox-checked
+
+.multiselect--disabled .multiselect__select
+    opacity: 0.6
