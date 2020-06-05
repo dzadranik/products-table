@@ -1,10 +1,10 @@
 <template lang="pug">
-    table.table(v-if="isVisibleColumn")
+    table.table(v-if="hasVisibleColumns")
         thead
-            tr
+            tr 
                 td.table__td--first                 
                     .table__checkbox(@click="checkedAll" :class="{'checked' : isAllCheckToDelete}")
-                td(v-for="item in productMatrix" v-if="item.checked === true" @click="reversSort" :class="columnClass(item)" :key="item.value") {{item.name}}
+                td(v-for="item in productMatrix" v-if="item.checked === true" @click="reversSorting" :class="getColumnClass(item)" :key="item.value") {{item.name}}
                 td.table__td--last
         tbody
             TableColumn(v-for="product in productsOnPage" :product="product" :key="product.id")
@@ -22,43 +22,43 @@ export default {
         TableColumn
     },
     computed: {
-        ...mapState(["productMatrix", "sortingActive", "isSortingReverse"]),
+        ...mapState(["productMatrix", "sortingValue", "isSortingReverse"]),
         ...mapGetters([
             "productsOnPage",
-            "isVisibleColumn",
+            "hasVisibleColumns",
             "isAllCheckToDelete"
         ])
     },
     methods: {
-        ...mapMutations(["changeDeleteArray", "reversSorting"]),
+        ...mapMutations(["CHANGE_DELETED_PRODUCTS", "REVERS_SORTING"]),
 
         checkedAll: function() {
-            let ids = this.productsOnPage.map(item => item.id);
+            let indexes = this.productsOnPage.map(item => item.id);
             if (!this.isAllCheckToDelete) {
-                this.changeDeleteArray({
-                    id: ids,
+                this.CHANGE_DELETED_PRODUCTS({
+                    id: indexes,
                     action: "add"
                 });
             } else {
-                this.changeDeleteArray({
-                    id: ids,
+                this.CHANGE_DELETED_PRODUCTS({
+                    id: indexes,
                     action: "remove"
                 });
             }
         },
-        reversSort: function(e) {
+        reversSorting: function(e) {
             if (e.target.classList.contains("active")) {
-                this.reversSorting();
+                this.REVERS_SORTING();
             }
         },
-        columnClass: function(item) {
+        getColumnClass: function(item) {
             return [
                 `table__td--${item.value}`,
-                { active: this.sortingActive === item.value },
+                { active: this.sortingValue === item.value },
                 {
                     reverse:
                         this.isSortingReverse &&
-                        this.sortingActive === item.value
+                        this.sortingValue === item.value
                 }
             ];
         }
@@ -70,6 +70,7 @@ export default {
 @import ~@/sass/mixins
 .table
     width: 100%
+
     thead
         text-align: left
         border-bottom: 1px solid #EDEDED
@@ -93,6 +94,7 @@ export default {
                     transform: rotate(180deg)
             &.reverse:after
                 transform: rotate(0) 
+
     tbody
         tr
             &:nth-child(even)
@@ -104,6 +106,7 @@ export default {
                     text-shadow: 0 0 .52px $color-default, 0 0 .52px $color-default
                 .table__button-delete
                     display: flex
+
     td
         padding: 0 12px
         vertical-align: middle

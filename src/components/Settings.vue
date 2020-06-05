@@ -1,10 +1,10 @@
 <template lang="pug">
     .settings
         .settings__sorting
-            .settings__sorting-title Sorting by:
-            button(v-for="button in sortingButtons" :disabled="!button.checked" :key="button.value" :class="{active : sortingActive === button.value}" :data-value="button.value" @click="changeFirstColumn") {{button.name}}
+            .settings__sorting-title(:class="{disabled : !hasVisibleColumns}") Sorting by:
+            button(v-for="button in sortingButtons" :disabled="!button.checked" :key="button.value" :class="{active : sortingValue === button.value}" :data-value="button.value" @click="changeFirstColumn") {{button.name}}
 
-        button.settings__button-delete(@click="showConfirm({'event': $event})" data-button="delete" :disabled="productsToDelete.length === 0 || !isVisibleColumn") Delete {{totalDeletedProducts}}
+        button.settings__button-delete(@click="showConfirm" data-button="delete" :disabled="isDeleteDisabled") Delete {{totalDeletedProducts}}
         
         .settings__total-visible
             multiselect(
@@ -14,24 +14,24 @@
                 :searchable="false"
                 :close-on-select="true"
                 :show-labels="false"
-                :preselect-first="true"
+                :preselect-first="false"
                 :allow-empty="false"
-                :disabled="!isVisibleColumn"
+                :disabled="!hasVisibleColumns"
                 placeholder=""
             )
                 template(slot="singleLabel" slot-scope="{ option }")
                     span.multiselect__single {{ option }} Per Page
 
         .settings__paging-nav
-            button.settings__paging-button.settings__paging-button--prev(@click="changePageNumber" :disabled="firstProduct === 0 || !isVisibleColumn" data-value="prev")
+            button.settings__paging-button.settings__paging-button--prev(@click="changePageNumber" :disabled="firstProduct === 0 || !hasVisibleColumns" data-value="prev")
                 include ../assets/svg/prev.svg
 
-            .settings__paging-title 
+            .settings__paging-title(:class="{disabled : !hasVisibleColumns}")
                 b {{firstProduct + 1}}-{{lastProduct}} 
                 | of 
                 b {{totalProducts}}
 
-            button.settings__paging-button.settings__paging-button--next(@click="changePageNumber"  :disabled="lastProduct === totalProducts || !isVisibleColumn" data-value="next")
+            button.settings__paging-button.settings__paging-button--next(@click="changePageNumber"  :disabled="lastProduct === totalProducts || !hasVisibleColumns" data-value="next")
                 include ../assets/svg/next.svg
             
         .settings__select-column
@@ -71,7 +71,7 @@ export default {
             sortingButtons: { ...this.$store.state.productMatrix },
 
             totalVisibleOptions: ["10", "15", "20"],
-            totalVisibleModel: "",
+            totalVisibleModel: "10",
 
             columnsVisibleOptions: [
                 { value: "all", name: "Select All", checked: "checked" },
@@ -84,13 +84,19 @@ export default {
         };
     },
     computed: {
-        ...mapState(["productsToDelete", "sortingActive"]),
+        ...mapState(["productsToDelete", "sortingValue"]),
         ...mapGetters([
             "firstProduct",
             "lastProduct",
             "totalProducts",
-            "isVisibleColumn"
+            "hasVisibleColumns"
         ]),
+
+        isDeleteDisabled: function() {
+            return (
+                this.productsToDelete.length === 0 || !this.hasVisibleColumns
+            );
+        },
 
         columnsVisibleValue: function() {
             if (
@@ -111,16 +117,19 @@ export default {
     methods: {
         ...mapMutations([
             "CHANGE_PAGE_NUMBER",
-            "CHANGE_TOTAL_VISIBLE",
+            "CHANGE_TOTAL_VISIBLE_PRODUCTS",
             "CHANGE_FIRST_COLUMN",
-            "CHANGE_DISPLAY_COLUMN",
-            "showConfirm"
+            "CHANGE_VISIBLE_COLUMNS",
+            "SHOW_CONFIRM"
         ]),
+        showConfirm: function(e) {
+            this.SHOW_CONFIRM({ event: e });
+        },
         changePageNumber: function(e) {
             this.CHANGE_PAGE_NUMBER(e.currentTarget.dataset.value);
         },
         changeTotalVisible: function() {
-            this.CHANGE_TOTAL_VISIBLE(this.totalVisibleModel);
+            this.CHANGE_TOTAL_VISIBLE_PRODUCTS(this.totalVisibleModel);
         },
         changeFirstColumn: function(e) {
             this.CHANGE_FIRST_COLUMN(e.currentTarget.dataset.value);
@@ -166,7 +175,7 @@ export default {
             let columnsValues = this.columnsVisibleModel.map(
                 item => item.value
             );
-            this.CHANGE_DISPLAY_COLUMN(columnsValues);
+            this.CHANGE_VISIBLE_COLUMNS(columnsValues);
         }
     }
 };
@@ -176,6 +185,9 @@ export default {
 <style lang="sass">
 @import ../sass/mixins
 @import ../sass/multiselect
+=disabled
+    &.disabled
+        opacity: 0.15
 
 .settings
     display: flex
@@ -196,6 +208,7 @@ export default {
     &__sorting-title
         margin-right: 10px
         font-weight: 600
+        +disabled
 
     &__button-delete:not(:disabled)
         background: $color-green
@@ -217,6 +230,7 @@ export default {
     
     &__paging-title
         margin-right: 10px
+        +disabled
 
     &__select-column
         .multiselect
@@ -229,5 +243,4 @@ export default {
     &__select-checkbox
         margin: 5px 10px 0 0
         +checkbox
-
 </style>

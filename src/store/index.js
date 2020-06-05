@@ -1,13 +1,16 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { CHANGE_PAGE_NUMBER, CHANGE_TOTAL_VISIBLE, CHANGE_FIRST_COLUMN, CHANGE_DISPLAY_COLUMN } from './mutation-types'
-import { getProducts, deleteProducts } from '../api/request.js';
+import { LOAD, DELETE, CHANGE_PAGE_NUMBER, CHANGE_TOTAL_VISIBLE_PRODUCTS, CHANGE_FIRST_COLUMN, CHANGE_VISIBLE_COLUMNS, SHOW_CONFIRM, REVERS_SORTING, CHANGE_DELETED_PRODUCTS, HIDE_CONFIRM } from './mutation-types'
+import { getProducts, deleteProducts } from '../api/request';
+import { getCoords } from '../js/some-function';
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
     state: {
-        loadAgain: false, //не удалось загрузить список продуктов
+        errorLoad: false, //не удалось загрузить список продуктов
+        errorDelete: false, //не удалось удалить продукты
+        isDeleting: false,
         products: [], //загруженные продукты
 
         pageNumber: 0, //номер страницы
@@ -21,14 +24,15 @@ export default new Vuex.Store({
             { 'value': 'protein', 'name': 'Protein (g)', 'checked': true },
             { 'value': 'iron', 'name': 'Iron (%)', 'checked': true }
         ],
-        sortingActive: 'product',
+        sortingValue: '',
         isSortingReverse: false,
 
         productsToDelete: [], //список продуктов для удаления
-        isDeleteOne: false,
-        deleteOneId: '',
 
-        isShowConfirm: false,
+        isDeleteOne: false,
+        oneIdToDelete: '',
+
+        isConfirmShow: false,
         confirmPosition: {},
 
     },
@@ -49,18 +53,18 @@ export default new Vuex.Store({
         },
         productsOnPage: (state, getters) => { //возвращает список продуктов для страницы
             let sortProducts = state.products.sort(function (a, b) {
-                if (a[state.sortingActive] < b[state.sortingActive]) return -1;
-                if (a[state.sortingActive] > b[state.sortingActive]) return 1;
+                if (a[state.sortingValue] < b[state.sortingValue]) return -1;
+                if (a[state.sortingValue] > b[state.sortingValue]) return 1;
             })
             if (state.isSortingReverse) sortProducts.reverse()
 
             return sortProducts.slice(getters.firstProduct, getters.lastProduct)
         },
-        isVisibleColumn: (state) => { //есть ли активные колонки
+        hasVisibleColumns: state => { //есть ли активные колонки
             let total = state.productMatrix.filter(item => item.checked === true)
             if (total.length === 0) { return false } else { return true }
         },
-        isCheckToDelete: (state) => (id) => { //проверяет есть ли продукт в массиве на удаление
+        isCheckToDelete: state => id => { //проверяет есть ли продукт в массиве на удаление
             return state.productsToDelete.includes(id)
         },
         isAllCheckToDelete: (state, getters) => { //проверяет все ли товары на странице в массиве на удаление
@@ -73,8 +77,16 @@ export default new Vuex.Store({
 
     },
     mutations: {
-        delete(state) { //удаляет продукты
+        [LOAD](state) { //загружает продукты
+            state.errorLoad = false
+            getProducts().then(products => {
+                state.products = products
+            }).catch(() => state.errorLoad = true)
+        },
+        [DELETE](state) { //удаляет продукты
+            state.isDeleting = true
             deleteProducts().then(() => {
+                if (state.errorDelete) state.errorDelete = false
                 if (!state.isDeleteOne) {
                     for (let i = 0; i < state.productsToDelete.length; i++) {
                         let index = state.products.findIndex(item => item.id === state.productsToDelete[i])
@@ -82,26 +94,22 @@ export default new Vuex.Store({
                     }
                     state.productsToDelete = []
                 } else if (state.isDeleteOne) {
-                    console.log(state.isDeleteOne)
-                    let index = state.products.findIndex(item => item.id === state.deleteOneId)
-                    state.products.splice(index, 1)
+                    let indexInProducts = state.products.findIndex(item => item.id === state.oneIdToDelete),
+                        indexInDelete = state.productsToDelete.findIndex(item => item === state.oneIdToDelete)
+                    state.products.splice(indexInProducts, 1)
+                    if (indexInDelete >= 0) state.productsToDelete.splice(indexInProducts, 1)
                 }
+                state.isConfirmShow = false
+                state.isDeleteOne = false
             }
-            ).catch(error => console.log('catch', error))
+            ).catch(() => {
+                state.errorDelete = true
+            }).finally(() => state.isDeleting = false)
         },
-
-        load(state) { //загружает продукты
-            state.loadAgain = false
-            getProducts().then(products => {
-                state.products = products
-            }).catch(() => state.loadAgain = true)
-        },
-
-        reversSorting(state) {
+        [REVERS_SORTING](state) {
             state.isSortingReverse = !state.isSortingReverse
         },
-
-        changeDeleteArray(state, value) { //изменяет список продуктов для удаления
+        [CHANGE_DELETED_PRODUCTS](state, value) { //изменяет список продуктов для удаления
             if (value.action === 'add') {
                 for (let i = 0; i < value.id.length; i++) {
                     if (!state.productsToDelete.includes(value.id[i])) {
@@ -115,8 +123,7 @@ export default new Vuex.Store({
                 }
             }
         },
-
-        [CHANGE_PAGE_NUMBER](state, value) { // пагинация
+        [CHANGE_PAGE_NUMBER](state, value) { //пагинация
             if (value === 'next' && state.pageNumber < Math.ceil(state.products.length / state.totalVisible) - 1) {
                 state.pageNumber++
             }
@@ -124,44 +131,33 @@ export default new Vuex.Store({
                 state.pageNumber--
             }
         },
-
-        [CHANGE_TOTAL_VISIBLE](state, value) { //меняет количество продуктов на странице
+        [CHANGE_TOTAL_VISIBLE_PRODUCTS](state, value) { //меняет количество продуктов на странице
             state.totalVisible = +value
             state.pageNumber = 0
         },
-
         [CHANGE_FIRST_COLUMN](state, value) { //меняет первую колонку таблицы
-            state.sortingActive = value
+            state.sortingValue = value
             let index = state.productMatrix.findIndex(item => item.value === value);
             [state.productMatrix[0], state.productMatrix[index]] = [state.productMatrix[index], state.productMatrix[0]]
             state.productMatrix.push()
         },
-
-        [CHANGE_DISPLAY_COLUMN](state, array) { //меняет отображение колонок
-            state.productMatrix.forEach((product) => {
+        [CHANGE_VISIBLE_COLUMNS](state, array) { //меняет отображение колонок
+            state.productMatrix.forEach(product => {
                 let isChecked = array.includes(product.value)
                 isChecked ? product.checked = true : product.checked = false
             })
         },
-        showConfirm(state, value) { // показать окно подтверждения
-            state.isShowConfirm = true
-            if (value.id) { state.deleteOneId = value.id, state.isDeleteOne = true }
+        [SHOW_CONFIRM](state, value) { // показать окно подтверждения
+            state.isConfirmShow = true
+            if (state.errorDelete) state.errorDelete = false
+            if (value.id) { state.oneIdToDelete = value.id, state.isDeleteOne = true } //если приходит id, то event сработал для удаления одного продукта
             let coord = getCoords(value.event.target)
             state.confirmPosition = coord
         },
-        hideConfirm(state) {
-            state.isDeleteOne = false
-            state.isShowConfirm = false
+        [HIDE_CONFIRM](state) {
+            state.isConfirmShow = false
+            if (state.isDeleteOne) state.isDeleteOne = false
+            state.oneIdToDelete = '' //сбрасывает выделение колонки таблицы
         }
-
     },
 })
-
-function getCoords(elem) {
-    let box = elem.getBoundingClientRect();
-
-    return {
-        top: box.top + box.height + pageYOffset + 'px',
-        left: box.left + box.width / 2 + pageXOffset + 'px'
-    };
-}

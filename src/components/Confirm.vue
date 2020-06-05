@@ -1,40 +1,44 @@
 <template lang="pug">
     .confirm(:style="confirmPosition")
-        .confirm__title Are you sure you want to 
-            b delete item
-            | ?
-        button.confirm__button(@click="hideConfirm()")  Cancel
-        button.confirm__button.confirm__button--confirm(@click="deleteProducts()") Confirm
+        div(v-show="!isDeleting")
+            .confirm__title(v-if="!errorDelete") Are you sure you want to 
+                b delete item
+                | ?
+            .confirm__title(v-if="errorDelete") Oooops, try again...
+            
+            button.confirm__button(@click="HIDE_CONFIRM()") Cancel
+            button.confirm__button.confirm__button--confirm(@click="DELETE()") Confirm
+
+        Loader(v-if="isDeleting")
+
 </template>
 
 <script>
 import { mapState } from "vuex";
 import { mapMutations } from "vuex";
-function hideConfirm(e) {
-    let isDeleteButton = e.target.dataset.button === "delete",
-        isConfirm = e.target.closest(".confirm");
-    if (!isConfirm && !isDeleteButton) {
-        this.hideConfirm();
-    }
-}
+import Loader from "./Loader.vue";
 
 export default {
     name: "Confirm",
+    components: { Loader },
     computed: {
-        ...mapState(["confirmPosition"])
+        ...mapState(["confirmPosition", "errorDelete", "isDeleting"])
     },
     methods: {
-        ...mapMutations(["hideConfirm"]),
-        ...mapMutations({
-            deleteProducts: "delete"
-        })
+        ...mapMutations(["HIDE_CONFIRM", "DELETE"]),
+        hideConfirm: function(e) {
+            let isDeleteButton = e.target.dataset.button === "delete",
+                isConfirm = e.target.closest(".confirm");
+            if (!isConfirm && !isDeleteButton) {
+                this.HIDE_CONFIRM();
+            }
+        }
     },
     mounted() {
-        var vue = this;
-        document.addEventListener("click", hideConfirm.bind(vue));
+        document.addEventListener("click", this.hideConfirm);
     },
     destroyed() {
-        document.removeEventListener("click", hideConfirm);
+        document.removeEventListener("click", this.hideConfirm);
     }
 };
 </script>
@@ -50,6 +54,7 @@ export default {
     border-radius: 4px
     text-align: center
     transform: translate(-50%, 10px)
+    min-width: 250px
 
     &__title
         margin-bottom: 10px
