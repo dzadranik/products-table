@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { LOAD, DELETE, CHANGE_PAGE_NUMBER, CHANGE_TOTAL_VISIBLE_PRODUCTS, CHANGE_FIRST_COLUMN, CHANGE_VISIBLE_COLUMNS, SHOW_CONFIRM, REVERS_SORTING, CHANGE_DELETED_PRODUCTS, HIDE_CONFIRM } from './mutation-types'
+import { GET_PRODUCTS, DELETE_PRODUCTS, SET_PAGE_NUMBER, SET_PRODUCTS_TOTAL_VISIBLE, SET_FIRST_COLUMN, SET_COLUMNS_VISIBLE, SHOW_CONFIRM, REVERS_SORTING, SET_DELETED_PRODUCTS, HIDE_CONFIRM } from './mutation-types'
 import { getProducts, deleteProducts } from '../api/request';
 import { getCoords } from '../js/some-function';
 
@@ -10,11 +10,12 @@ export default new Vuex.Store({
     state: {
         errorLoad: false, //не удалось загрузить список продуктов
         errorDelete: false, //не удалось удалить продукты
+        isLoading: false,
         isDeleting: false,
         products: [], //загруженные продукты
 
         pageNumber: 0, //номер страницы
-        totalVisible: 10, //количество продуктов на странице
+        productsTotalVisible: 10, //количество продуктов на странице
 
         productMatrix: [ //матрица для отрисовки таблицы продуктов
             { 'value': 'product', 'name': 'Product(100g serving)', 'checked': true },
@@ -37,18 +38,18 @@ export default new Vuex.Store({
 
     },
     getters: {
-        firstProduct: state => { //индекс первого продукта на странице
-            return state.pageNumber * state.totalVisible
+        productFirstIndex: state => { //индекс первого продукта на странице
+            return state.pageNumber * state.productsTotalVisible
         },
-        lastProduct: state => { //индекс последнего продукта на странице
-            let estimateLast = state.pageNumber * state.totalVisible + state.totalVisible
+        productLastIndex: state => { //индекс последнего продукта на странице
+            let estimateLast = state.pageNumber * state.productsTotalVisible + state.productsTotalVisible
             if (state.products.length < estimateLast) {
                 return state.products.length
             } else {
                 return estimateLast
             }
         },
-        totalProducts: state => { //общее количество продуктов (навигация по страницам)
+        productsTotal: state => { //общее количество продуктов (навигация по страницам)
             return state.products.length
         },
         productsOnPage: (state, getters) => { //возвращает список продуктов для страницы
@@ -58,7 +59,10 @@ export default new Vuex.Store({
             })
             if (state.isSortingReverse) sortProducts.reverse()
 
-            return sortProducts.slice(getters.firstProduct, getters.lastProduct)
+            return sortProducts.slice(getters.productFirstIndex, getters.productLastIndex)
+        },
+        productMatrixChecked: (state) => { //матрица только видимых элементов
+            return state.productMatrix.filter(item => item.checked === true)
         },
         hasVisibleColumns: state => { //есть ли активные колонки
             let total = state.productMatrix.filter(item => item.checked === true)
@@ -77,13 +81,20 @@ export default new Vuex.Store({
 
     },
     mutations: {
-        [LOAD](state) { //загружает продукты
+        [GET_PRODUCTS](state) { //загружает продукты
+            state.isLoading = true
             state.errorLoad = false
             getProducts().then(products => {
+                if (state.errorLoad) state.errorLoad = false
                 state.products = products
-            }).catch(() => state.errorLoad = true)
+            }).catch(() => {
+                state.errorLoad = true
+            })
+                .finally(() => {
+                    state.isLoading = false
+                })
         },
-        [DELETE](state) { //удаляет продукты
+        [DELETE_PRODUCTS](state) { //удаляет продукты
             state.isDeleting = true
             deleteProducts().then(() => {
                 if (state.errorDelete) state.errorDelete = false
@@ -97,19 +108,18 @@ export default new Vuex.Store({
                     let indexInProducts = state.products.findIndex(item => item.id === state.oneIdToDelete),
                         indexInDelete = state.productsToDelete.findIndex(item => item === state.oneIdToDelete)
                     state.products.splice(indexInProducts, 1)
-                    if (indexInDelete >= 0) state.productsToDelete.splice(indexInProducts, 1)
+                    if (indexInDelete >= 0) state.productsToDelete.splice(indexInDelete, 1)
                 }
                 state.isConfirmShow = false
                 state.isDeleteOne = false
             }
-            ).catch(() => {
-                state.errorDelete = true
-            }).finally(() => state.isDeleting = false)
+            ).catch(() => state.errorDelete = true)
+                .finally(() => state.isDeleting = false)
         },
         [REVERS_SORTING](state) {
             state.isSortingReverse = !state.isSortingReverse
         },
-        [CHANGE_DELETED_PRODUCTS](state, value) { //изменяет список продуктов для удаления
+        [SET_DELETED_PRODUCTS](state, value) { //изменяет список продуктов для удаления
             if (value.action === 'add') {
                 for (let i = 0; i < value.id.length; i++) {
                     if (!state.productsToDelete.includes(value.id[i])) {
@@ -123,25 +133,25 @@ export default new Vuex.Store({
                 }
             }
         },
-        [CHANGE_PAGE_NUMBER](state, value) { //пагинация
-            if (value === 'next' && state.pageNumber < Math.ceil(state.products.length / state.totalVisible) - 1) {
+        [SET_PAGE_NUMBER](state, value) { //пагинация
+            if (value === 'next' && state.pageNumber < Math.ceil(state.products.length / state.productsTotalVisible) - 1) {
                 state.pageNumber++
             }
             else if (value === 'prev' && state.pageNumber > 0) {
                 state.pageNumber--
             }
         },
-        [CHANGE_TOTAL_VISIBLE_PRODUCTS](state, value) { //меняет количество продуктов на странице
-            state.totalVisible = +value
+        [SET_PRODUCTS_TOTAL_VISIBLE](state, value) { //меняет количество продуктов на странице
+            state.productsTotalVisible = +value
             state.pageNumber = 0
         },
-        [CHANGE_FIRST_COLUMN](state, value) { //меняет первую колонку таблицы
+        [SET_FIRST_COLUMN](state, value) { //меняет первую колонку таблицы
             state.sortingValue = value
             let index = state.productMatrix.findIndex(item => item.value === value);
             [state.productMatrix[0], state.productMatrix[index]] = [state.productMatrix[index], state.productMatrix[0]]
             state.productMatrix.push()
         },
-        [CHANGE_VISIBLE_COLUMNS](state, array) { //меняет отображение колонок
+        [SET_COLUMNS_VISIBLE](state, array) { //меняет отображение колонок
             state.productMatrix.forEach(product => {
                 let isChecked = array.includes(product.value)
                 isChecked ? product.checked = true : product.checked = false

@@ -3,44 +3,55 @@
         thead
             tr 
                 td.table__td--first                 
-                    .table__checkbox(@click="checkedAll" :class="{'checked' : isAllCheckToDelete}")
-                td(v-for="item in productMatrix" v-if="item.checked === true" @click="reversSorting" :class="getColumnClass(item)" :key="item.value") {{item.name}}
+                    .table__checkbox(
+                        :class="{'checked' : isAllCheckToDelete}"
+                        @click="checkedAll" 
+                        )
+                td(
+                    v-for="item in productMatrixChecked"
+                    :key="item.value"
+                    :class="getColumnClass(item)"
+                    @click="reversSorting"
+                    ) {{item.name}}
                 td.table__td--last
         tbody
-            TableColumn(v-for="product in productsOnPage" :product="product" :key="product.id")
+            UiTableColumn(
+                v-for="product in productsOnPage"
+                :key="product.id"
+                :product="product"
+                )
 </template>
 
 <script>
 import { mapState } from "vuex";
 import { mapGetters } from "vuex";
 import { mapMutations } from "vuex";
-import TableColumn from "./TableColumn.vue";
+import UiTableColumn from "./UiTableColumn.vue";
 
 export default {
-    name: "Table",
-    components: {
-        TableColumn
-    },
+    name: "UiTable",
+    components: { UiTableColumn },
     computed: {
-        ...mapState(["productMatrix", "sortingValue", "isSortingReverse"]),
+        ...mapState(["sortingValue", "isSortingReverse"]),
         ...mapGetters([
             "productsOnPage",
             "hasVisibleColumns",
-            "isAllCheckToDelete"
+            "isAllCheckToDelete",
+            "productMatrixChecked"
         ])
     },
     methods: {
-        ...mapMutations(["CHANGE_DELETED_PRODUCTS", "REVERS_SORTING"]),
+        ...mapMutations(["SET_DELETED_PRODUCTS", "REVERS_SORTING"]),
 
         checkedAll: function() {
             let indexes = this.productsOnPage.map(item => item.id);
             if (!this.isAllCheckToDelete) {
-                this.CHANGE_DELETED_PRODUCTS({
+                this.SET_DELETED_PRODUCTS({
                     id: indexes,
                     action: "add"
                 });
             } else {
-                this.CHANGE_DELETED_PRODUCTS({
+                this.SET_DELETED_PRODUCTS({
                     id: indexes,
                     action: "remove"
                 });

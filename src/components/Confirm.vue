@@ -7,25 +7,25 @@
             .confirm__title(v-if="errorDelete") Oooops, try again...
             
             button.confirm__button(@click="HIDE_CONFIRM()") Cancel
-            button.confirm__button.confirm__button--confirm(@click="DELETE()") Confirm
+            button.confirm__button.confirm__button--confirm(@click="DELETE_PRODUCTS()") Confirm
 
-        Loader(v-if="isDeleting")
+        loader(v-if="isDeleting")
 
 </template>
 
 <script>
 import { mapState } from "vuex";
 import { mapMutations } from "vuex";
-import Loader from "./Loader.vue";
+import loader from "./Loader.vue";
 
 export default {
     name: "Confirm",
-    components: { Loader },
+    components: { loader },
     computed: {
         ...mapState(["confirmPosition", "errorDelete", "isDeleting"])
     },
     methods: {
-        ...mapMutations(["HIDE_CONFIRM", "DELETE"]),
+        ...mapMutations(["HIDE_CONFIRM", "DELETE_PRODUCTS"]),
         hideConfirm: function(e) {
             let isDeleteButton = e.target.dataset.button === "delete",
                 isConfirm = e.target.closest(".confirm");
@@ -37,7 +37,7 @@ export default {
     mounted() {
         document.addEventListener("click", this.hideConfirm);
     },
-    destroyed() {
+    beforeDestroy() {
         document.removeEventListener("click", this.hideConfirm);
     }
 };

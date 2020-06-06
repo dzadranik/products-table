@@ -2,57 +2,78 @@
     .settings
         .settings__sorting
             .settings__sorting-title(:class="{disabled : !hasVisibleColumns}") Sorting by:
-            button(v-for="button in sortingButtons" :disabled="!button.checked" :key="button.value" :class="{active : sortingValue === button.value}" :data-value="button.value" @click="changeFirstColumn") {{button.name}}
+            button(
+                v-for="button in sortingButtons"
+                :key="button.value"
+                :disabled="!button.checked"
+                :class="{active : sortingValue === button.value}"
+                :data-value="button.value"
+                @click="setFirstColumn"
+                ) {{button.name}}
 
-        button.settings__button-delete(@click="showConfirm" data-button="delete" :disabled="isDeleteDisabled") Delete {{totalDeletedProducts}}
+        button.settings__button-delete(
+            :disabled="isDeleteDisabled"
+            @click="showConfirm" 
+            data-button="delete" 
+            ) Delete {{totalDeletedProducts}}
         
         .settings__total-visible
             multiselect(
-                @input="changeTotalVisible"
-                v-model="totalVisibleModel"
-                :options="totalVisibleOptions"
+                v-model="productsTotalVisibleModel"
+                :options="productsTotalVisibleOptions"
                 :searchable="false"
                 :close-on-select="true"
                 :show-labels="false"
                 :preselect-first="false"
                 :allow-empty="false"
                 :disabled="!hasVisibleColumns"
+                @input="setProductsTotalVisible"
                 placeholder=""
             )
-                template(slot="singleLabel" slot-scope="{ option }")
+                template(v-slot:singleLabel="{ option }")
                     span.multiselect__single {{ option }} Per Page
 
         .settings__paging-nav
-            button.settings__paging-button.settings__paging-button--prev(@click="changePageNumber" :disabled="firstProduct === 0 || !hasVisibleColumns" data-value="prev")
+            button.settings__paging-button.settings__paging-button--prev(
+                :disabled="productFirstIndex === 0 || !hasVisibleColumns"
+                @click="setPageNumber"
+                data-value="prev"
+                )
                 include ../assets/svg/prev.svg
 
             .settings__paging-title(:class="{disabled : !hasVisibleColumns}")
-                b {{firstProduct + 1}}-{{lastProduct}} 
-                | of 
-                b {{totalProducts}}
+                b {{productFirstIndex + 1}}-{{productLastIndex}} 
+                | of
+                b {{productsTotal}}
 
-            button.settings__paging-button.settings__paging-button--next(@click="changePageNumber"  :disabled="lastProduct === totalProducts || !hasVisibleColumns" data-value="next")
+            button.settings__paging-button.settings__paging-button--next(
+                :disabled="productLastIndex === productsTotal || !hasVisibleColumns"
+                @click="setPageNumber"
+                data-value="next"
+                )
                 include ../assets/svg/next.svg
             
         .settings__select-column
             multiselect(
-                @input="changeDisplayColumn"
                 v-model="columnsVisibleModel"
                 :options="columnsVisibleOptions"
                 :multiple="true"
                 :searchable="false"
                 :close-on-select="false"
                 :showLabels="false"
+                @input="setColumnsVisible"
                 label="name",
                 track-by="value",
                 placeholder="Select columns"
             )
-                template(slot="option", slot-scope="{ option }", dala-selected="option.checked")
+                template(v-slot:option="{ option }")
                     .settings__select-option
                         .settings__select-checkbox
                         span {{ option.name }}
-                template(slot="selection")
+                template(v-slot:selection="{isOpen}")
                     span.multiselect__single(v-if="columnsVisibleValue") {{ columnsVisibleValue }} columns selected
+                    span.multiselect__single(v-if="!columnsVisibleValue && isOpen") 
+                        b Select columns
 </template>
 
 <script>
@@ -62,33 +83,20 @@ import { mapMutations } from "vuex";
 import Multiselect from "vue-multiselect";
 
 export default {
-    name: "Settings",
+    name: "UiTableSettings",
     components: {
         Multiselect
     },
-    data() {
-        return {
-            sortingButtons: { ...this.$store.state.productMatrix },
-
-            totalVisibleOptions: ["10", "15", "20"],
-            totalVisibleModel: "10",
-
-            columnsVisibleOptions: [
-                { value: "all", name: "Select All", checked: "checked" },
-                ...this.$store.state.productMatrix
-            ],
-            columnsVisibleModel: [
-                { value: "all", name: "Select All" },
-                ...this.$store.state.productMatrix
-            ]
-        };
-    },
     computed: {
-        ...mapState(["productsToDelete", "sortingValue"]),
+        ...mapState([
+            "productsToDelete",
+            "sortingValue",
+            "productsTotalVisible"
+        ]),
         ...mapGetters([
-            "firstProduct",
-            "lastProduct",
-            "totalProducts",
+            "productFirstIndex",
+            "productLastIndex",
+            "productsTotal",
             "hasVisibleColumns"
         ]),
 
@@ -114,28 +122,45 @@ export default {
             return "";
         }
     },
+    data() {
+        return {
+            sortingButtons: { ...this.$store.state.productMatrix },
+
+            productsTotalVisibleOptions: ["10", "15", "20"],
+            productsTotalVisibleModel: this.$store.state.productsTotalVisible,
+
+            columnsVisibleOptions: [
+                { value: "all", name: "Select All", checked: "checked" },
+                ...this.$store.state.productMatrix
+            ],
+            columnsVisibleModel: [
+                { value: "all", name: "Select All" },
+                ...this.$store.state.productMatrix
+            ]
+        };
+    },
     methods: {
         ...mapMutations([
-            "CHANGE_PAGE_NUMBER",
-            "CHANGE_TOTAL_VISIBLE_PRODUCTS",
-            "CHANGE_FIRST_COLUMN",
-            "CHANGE_VISIBLE_COLUMNS",
+            "SET_PAGE_NUMBER",
+            "SET_PRODUCTS_TOTAL_VISIBLE",
+            "SET_FIRST_COLUMN",
+            "SET_COLUMNS_VISIBLE",
             "SHOW_CONFIRM"
         ]),
         showConfirm: function(e) {
             this.SHOW_CONFIRM({ event: e });
         },
-        changePageNumber: function(e) {
-            this.CHANGE_PAGE_NUMBER(e.currentTarget.dataset.value);
+        setPageNumber: function(e) {
+            this.SET_PAGE_NUMBER(e.currentTarget.dataset.value);
         },
-        changeTotalVisible: function() {
-            this.CHANGE_TOTAL_VISIBLE_PRODUCTS(this.totalVisibleModel);
+        setProductsTotalVisible: function() {
+            this.SET_PRODUCTS_TOTAL_VISIBLE(this.productsTotalVisibleModel);
         },
-        changeFirstColumn: function(e) {
-            this.CHANGE_FIRST_COLUMN(e.currentTarget.dataset.value);
+        setFirstColumn: function(e) {
+            this.SET_FIRST_COLUMN(e.currentTarget.dataset.value);
         },
 
-        changeDisplayColumn: function() {
+        setColumnsVisible: function() {
             //refact ---- !!!!!! ??includes
             let allIndex = this.columnsVisibleModel.findIndex(
                     item => item.value === "all"
@@ -175,7 +200,7 @@ export default {
             let columnsValues = this.columnsVisibleModel.map(
                 item => item.value
             );
-            this.CHANGE_VISIBLE_COLUMNS(columnsValues);
+            this.SET_COLUMNS_VISIBLE(columnsValues);
         }
     }
 };

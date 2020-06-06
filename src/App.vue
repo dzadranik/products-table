@@ -2,11 +2,15 @@
     main.main#App
         h1 Table UI
         
-        Loader( v-if="!isLoad && !errorLoad")
-        button(@click="LOAD()" v-if="errorLoad") Load again...
+        Loader(v-if="isLoading && !errorLoad")
+        button(
+            v-if="errorLoad"
+            @click="GET_PRODUCTS()" 
+            ) Load again...
 
-        Settings(v-if="isLoad")
-        Table(v-if="isLoad")
+        template(v-if="!isLoading && !errorLoad")
+            UiTableSettings
+            UiTable
 
         Confirm(v-if="isConfirmShow")
 </template>
@@ -15,29 +19,26 @@
 import { mapState } from "vuex";
 import { mapMutations } from "vuex";
 import Loader from "./components/Loader.vue";
-import Settings from "./components/Settings.vue";
-import Table from "./components/Table.vue";
+import UiTableSettings from "./components/UiTableSettings.vue";
+import UiTable from "./components/UiTable.vue";
 import Confirm from "./components/Confirm.vue";
 
 export default {
     name: "App",
     components: {
         Loader,
-        Settings,
-        Table,
+        UiTableSettings,
+        UiTable,
         Confirm
     },
     computed: {
-        ...mapState(["products", "errorLoad", "isConfirmShow"]),
-        isLoad: function() {
-            return this.products.length != 0;
-        }
+        ...mapState(["isLoading", "errorLoad", "isConfirmShow"])
     },
     methods: {
-        ...mapMutations(["LOAD"])
+        ...mapMutations(["GET_PRODUCTS"])
     },
     mounted: function() {
-        this.LOAD();
+        this.GET_PRODUCTS();
     }
 };
 </script>
