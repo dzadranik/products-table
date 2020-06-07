@@ -16,8 +16,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-import { mapMutations } from "vuex";
+import { mapState, mapMutations } from "vuex";
 import Loader from "./components/Loader.vue";
 import UiTableSettings from "./components/UiTableSettings.vue";
 import UiTable from "./components/UiTable.vue";

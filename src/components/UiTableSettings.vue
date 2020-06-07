@@ -77,9 +77,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-import { mapGetters } from "vuex";
-import { mapMutations } from "vuex";
+import { mapState, mapGetters, mapMutations } from "vuex";
 import Multiselect from "vue-multiselect";
 
 export default {

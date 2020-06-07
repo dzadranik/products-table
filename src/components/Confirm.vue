@@ -14,8 +14,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-import { mapMutations } from "vuex";
+import { mapState, mapMutations } from "vuex";
 import loader from "./Loader.vue";
 
 export default {
