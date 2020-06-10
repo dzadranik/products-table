@@ -1,1 +1,1 @@
-## https://dzadranik.github.io/products-table/dist/
+GitHub Pages https://dzadranik.github.io/products-table/dist/
