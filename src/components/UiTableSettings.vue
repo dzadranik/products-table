@@ -43,7 +43,7 @@
 
             .settings__paging-title(:class="{disabled : !hasVisibleColumns}")
                 b {{productFirstIndex + 1}}-{{productLastIndex}} 
-                | of
+                | of 
                 b {{productsTotal}}
 
             button.settings__paging-button.settings__paging-button--next(
@@ -89,14 +89,18 @@ export default {
         ...mapState([
             "productsToDelete",
             "sortingValue",
-            "productsTotalVisible"
+            "productsTotalVisible",
+            "products"
         ]),
         ...mapGetters([
             "productFirstIndex",
             "productLastIndex",
-            "productsTotal",
             "hasVisibleColumns"
         ]),
+
+        productsTotal: function() {
+            return this.products.length;
+        },
 
         isDeleteDisabled: function() {
             return (

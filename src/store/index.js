@@ -49,9 +49,6 @@ export default new Vuex.Store({
                 return estimateLast
             }
         },
-        productsTotal: state => { //общее количество продуктов (навигация по страницам)
-            return state.products.length
-        },
         productsOnPage: (state, getters) => { //возвращает список продуктов для страницы
             let sortProducts = state.products.sort(function (a, b) {
                 if (a[state.sortingValue] < b[state.sortingValue]) return -1;
@@ -143,7 +140,6 @@ export default new Vuex.Store({
         },
         [SET_PRODUCTS_TOTAL_VISIBLE](state, value) { //меняет количество продуктов на странице
             state.productsTotalVisible = +value
-            state.pageNumber = 0
         },
         [SET_FIRST_COLUMN](state, value) { //меняет первую колонку таблицы
             state.sortingValue = value

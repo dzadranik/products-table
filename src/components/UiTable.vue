@@ -126,7 +126,7 @@ export default {
         &--first
             width: 60px
         &--product
-            min-width: 300px
+            width: 300px
         &--last
             width: 120px
 

@@ -9,7 +9,6 @@
         td(
             v-for="item in productMatrixChecked"
             :key="item.value"
-            :class="'table__' + item.value"
             ) {{product[item.value]}}
 
         td
