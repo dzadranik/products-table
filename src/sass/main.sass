@@ -23,10 +23,6 @@ body
 svg
     fill: inherit
 
-.main
-    max-width: 1140px
-    margin: 40px auto 60px
-
 h1
     font-weight: 600
     font-size: 32px
@@ -34,6 +30,9 @@ h1
     padding: 16px 0
     margin-bottom: 16px
     border-bottom: 1px solid $color-border
+
+b
+    font-weight: 600
 
 button
     outline: none
@@ -46,7 +45,7 @@ button
     height: 35px
     margin-right: 10px
     +transition
-    &:hover:not(:disabled):not(.active)
+    &:hover:not(:disabled):not(.is-active)
         background: rgba(0, 161, 30, 0.07)
         color: $color-default
     &:disabled
@@ -54,10 +53,7 @@ button
         fill: $color-border
         cursor: default
         opacity: 0.8
-    &.active:not(:disabled)
+    &.is-active:not(:disabled)
         background: $color-green
         border-color: $color-green
         color: $color-white
-            
-b
-    font-weight: 600

@@ -2,11 +2,11 @@
     .settings
         .settings__sorting
             .settings__sorting-title(:class="{disabled : !hasVisibleColumns}") Sorting by:
-            button(
+            button.settings__sorting-button(
                 v-for="button in sortingButtons"
                 :key="button.value"
                 :disabled="!button.checked"
-                :class="{active : sortingValue === button.value}"
+                :class="{'is-active' : sortingValue === button.value}"
                 :data-value="button.value"
                 @click="setFirstColumn"
                 ) {{button.name}}
@@ -77,134 +77,134 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapMutations } from "vuex";
+import { mapState, mapGetters, mapMutations, mapActions } from "vuex";
 import Multiselect from "vue-multiselect";
 
 export default {
-    name: "UiTableSettings",
-    components: {
-        Multiselect
-    },
-    computed: {
-        ...mapState([
-            "productsToDelete",
-            "sortingValue",
-            "productsTotalVisible",
-            "products"
-        ]),
-        ...mapGetters([
-            "productFirstIndex",
-            "productLastIndex",
-            "hasVisibleColumns"
-        ]),
+	name: "UiTableSettings",
+	components: {
+		Multiselect
+	},
+	computed: {
+		...mapState([
+			"productsToDelete",
+			"sortingValue",
+			"productsTotalVisible",
+			"products"
+		]),
+		...mapGetters([
+			"productFirstIndex",
+			"productLastIndex",
+			"hasVisibleColumns"
+		]),
 
-        productsTotal: function() {
-            return this.products.length;
-        },
+		productsTotal: function() {
+			return this.products.length;
+		},
 
-        isDeleteDisabled: function() {
-            return (
-                this.productsToDelete.length === 0 || !this.hasVisibleColumns
-            );
-        },
+		isDeleteDisabled: function() {
+			return (
+				this.productsToDelete.length === 0 || !this.hasVisibleColumns
+			);
+		},
 
-        columnsVisibleValue: function() {
-            if (
-                this.columnsVisibleModel.length ===
-                this.columnsVisibleOptions.length
-            ) {
-                return this.columnsVisibleModel.length - 1;
-            }
-            return this.columnsVisibleModel.length;
-        },
-        totalDeletedProducts: function() {
-            if (this.productsToDelete.length !== 0) {
-                return `(${this.productsToDelete.length})`;
-            }
-            return "";
-        }
-    },
-    data() {
-        return {
-            sortingButtons: { ...this.$store.state.productMatrix },
+		columnsVisibleValue: function() {
+			if (
+				this.columnsVisibleModel.length ===
+				this.columnsVisibleOptions.length
+			) {
+				return this.columnsVisibleModel.length - 1;
+			}
+			return this.columnsVisibleModel.length;
+		},
+		totalDeletedProducts: function() {
+			if (this.productsToDelete.length !== 0) {
+				return `(${this.productsToDelete.length})`;
+			}
+			return "";
+		}
+	},
+	data() {
+		return {
+			sortingButtons: { ...this.$store.state.productMatrix },
 
-            productsTotalVisibleOptions: ["10", "15", "20"],
-            productsTotalVisibleModel: this.$store.state.productsTotalVisible,
+			productsTotalVisibleOptions: ["10", "15", "20"],
+			productsTotalVisibleModel: this.$store.state.productsTotalVisible,
 
-            columnsVisibleOptions: [
-                { value: "all", name: "Select All", checked: "checked" },
-                ...this.$store.state.productMatrix
-            ],
-            columnsVisibleModel: [
-                { value: "all", name: "Select All" },
-                ...this.$store.state.productMatrix
-            ]
-        };
-    },
-    methods: {
-        ...mapMutations([
-            "SET_PAGE_NUMBER",
-            "SET_PRODUCTS_TOTAL_VISIBLE",
-            "SET_FIRST_COLUMN",
-            "SET_COLUMNS_VISIBLE",
-            "SHOW_CONFIRM"
-        ]),
-        showConfirm: function(e) {
-            this.SHOW_CONFIRM({ event: e });
-        },
-        setPageNumber: function(e) {
-            this.SET_PAGE_NUMBER(e.currentTarget.dataset.value);
-        },
-        setProductsTotalVisible: function() {
-            this.SET_PRODUCTS_TOTAL_VISIBLE(this.productsTotalVisibleModel);
-        },
-        setFirstColumn: function(e) {
-            this.SET_FIRST_COLUMN(e.currentTarget.dataset.value);
-        },
+			columnsVisibleOptions: [
+				{ value: "all", name: "Select All", checked: "checked" },
+				...this.$store.state.productMatrix
+			],
+			columnsVisibleModel: [
+				{ value: "all", name: "Select All" },
+				...this.$store.state.productMatrix
+			]
+		};
+	},
+	methods: {
+		...mapMutations([
+			"SET_PAGE_NUMBER",
+			"SET_PRODUCTS_TOTAL_VISIBLE",
+			"SET_FIRST_COLUMN",
+			"SET_COLUMNS_VISIBLE"
+		]),
+		...mapActions({ showConfirmDelete: "showConfirm" }),
+		showConfirm: function(e) {
+			this.showConfirmDelete({ event: e });
+		},
+		setPageNumber: function(e) {
+			this.SET_PAGE_NUMBER(e.currentTarget.dataset.value);
+		},
+		setProductsTotalVisible: function() {
+			this.SET_PRODUCTS_TOTAL_VISIBLE(this.productsTotalVisibleModel);
+		},
+		setFirstColumn: function(e) {
+			this.SET_FIRST_COLUMN(e.currentTarget.dataset.value);
+		},
 
-        setColumnsVisible: function() {
-            //refact ---- !!!!!! ??includes
-            let allIndex = this.columnsVisibleModel.findIndex(
-                    item => item.value === "all"
-                ),
-                allChecked = this.columnsVisibleOptions[0].checked,
-                modelLength = this.columnsVisibleModel.length;
+		setColumnsVisible: function() {
+			//TODO: refact ---- !!!!!! ??includes
+			let allIndex = this.columnsVisibleModel.findIndex(
+					item => item.value === "all"
+				),
+				allChecked = this.columnsVisibleOptions[0].checked,
+				modelLength = this.columnsVisibleModel.length;
 
-            if (
-                allIndex === -1 &&
-                allChecked === "checked" &&
-                modelLength >= 6
-            ) {
-                this.columnsVisibleModel = [];
-                this.columnsVisibleOptions[0].checked = "unchecked";
-            } else if (
-                allIndex !== -1 &&
-                allChecked === "checked" &&
-                modelLength === 6
-            ) {
-                this.columnsVisibleModel.splice(allIndex, 1);
-                this.columnsVisibleOptions[0].checked = "unchecked";
-            } else if (
-                allIndex !== -1 &&
-                allChecked === "unchecked" &&
-                modelLength <= 6
-            ) {
-                this.columnsVisibleModel = this.columnsVisibleOptions;
-                this.columnsVisibleOptions[0].checked = "checked";
-            } else if (
-                allIndex === -1 &&
-                allChecked === "unchecked" &&
-                modelLength === 6
-            ) {
-                this.columnsVisibleModel = this.columnsVisibleOptions;
-                this.columnsVisibleOptions[0].checked = "checked";
-            }
-            let columnsValues = this.columnsVisibleModel.map(
-                item => item.value
-            );
-            this.SET_COLUMNS_VISIBLE(columnsValues);
-        }
-    }
+			if (
+				allIndex === -1 &&
+				allChecked === "checked" &&
+				modelLength >= 6
+			) {
+				this.columnsVisibleModel = [];
+				this.columnsVisibleOptions[0].checked = "unchecked";
+			} else if (
+				allIndex !== -1 &&
+				allChecked === "checked" &&
+				modelLength === 6
+			) {
+				this.columnsVisibleModel.splice(allIndex, 1);
+				this.columnsVisibleOptions[0].checked = "unchecked";
+			} else if (
+				allIndex !== -1 &&
+				allChecked === "unchecked" &&
+				modelLength <= 6
+			) {
+				this.columnsVisibleModel = this.columnsVisibleOptions;
+				this.columnsVisibleOptions[0].checked = "checked";
+			} else if (
+				allIndex === -1 &&
+				allChecked === "unchecked" &&
+				modelLength === 6
+			) {
+				this.columnsVisibleModel = this.columnsVisibleOptions;
+				this.columnsVisibleOptions[0].checked = "checked";
+			}
+			let columnsValues = this.columnsVisibleModel.map(
+				item => item.value
+			);
+			this.SET_COLUMNS_VISIBLE(columnsValues);
+		}
+	}
 };
 </script>
 
@@ -213,7 +213,7 @@ export default {
 @import ../sass/mixins
 @import ../sass/multiselect
 =disabled
-    &.disabled
+    &.is-disabled
         opacity: 0.15
 
 .settings
@@ -226,16 +226,17 @@ export default {
         margin-right: auto
         display: flex
         align-items: center
-        button
-            margin: 0
-            border-color: transparent
-            padding-left: 6px
-            padding-right: 6px
 
     &__sorting-title
         margin-right: 10px
         font-weight: 600
         +disabled
+        
+    &__sorting-button
+        margin: 0
+        border-color: transparent
+        padding-left: 6px
+        padding-right: 6px
 
     &__button-delete:not(:disabled)
         background: $color-green

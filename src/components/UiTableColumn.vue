@@ -1,17 +1,17 @@
 <template lang="pug">
-    tr(:class="{active: product.id === oneIdToDelete}")
-        td
+    tr.table__tr(:class="{'is-active': product.id === productOneToDelete}")
+        td.table__td
             .table__checkbox(
-                :class="{'checked' : isChecked}"
+                :class="{'is-checked' : isChecked}"
                 @click="setDeletedProducts"
                 )
 
-        td(
+        td.table__td(
             v-for="item in productMatrixChecked"
             :key="item.value"
             ) {{product[item.value]}}
 
-        td
+        td.table__td
             button.table__button-delete(
                 @click="showConfirm"
                 data-button="delete"
@@ -19,31 +19,32 @@
 </template>
 
 <script>
-import { mapState, mapMutations, mapGetters } from "vuex";
+import { mapState, mapMutations, mapGetters, mapActions } from "vuex";
 
 export default {
-    name: "UiTableColumn",
-    props: { product: Object },
-    computed: {
-        ...mapState(["oneIdToDelete"]),
-        ...mapGetters(["isCheckToDelete", "productMatrixChecked"]),
-        isChecked: function() {
-            return this.isCheckToDelete(this.product.id);
-        }
-    },
-    methods: {
-        ...mapMutations(["SET_DELETED_PRODUCTS", "SHOW_CONFIRM"]),
+	name: "UiTableColumn",
+	props: { product: Object },
+	computed: {
+		...mapState(["productOneToDelete"]),
+		...mapGetters(["isCheckToDelete", "productMatrixChecked"]),
+		isChecked: function() {
+			return this.isCheckToDelete(this.product.id);
+		}
+	},
+	methods: {
+		...mapMutations(["SET_DELETED_PRODUCTS"]),
+		...mapActions({ showConfirmDelete: "showConfirm" }),
 
-        setDeletedProducts: function() {
-            let action = this.checked ? "remove" : "add";
-            this.SET_DELETED_PRODUCTS({
-                id: [this.product.id],
-                action: action
-            });
-        },
-        showConfirm: function(e) {
-            this.SHOW_CONFIRM({ event: e, id: this.product.id });
-        }
-    }
+		setDeletedProducts: function() {
+			let action = this.checked ? "remove" : "add";
+			this.SET_DELETED_PRODUCTS({
+				id: [this.product.id],
+				action: action
+			});
+		},
+		showConfirm: function(e) {
+			this.showConfirmDelete({ event: e, id: this.product.id });
+		}
+	}
 };
 </script>
