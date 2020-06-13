@@ -8,12 +8,12 @@
                 :disabled="!button.checked"
                 :class="{'is-active' : sortingValue === button.value}"
                 :data-value="button.value"
-                @click="setFirstColumn"
+                @click="changeFirstColumn"
                 ) {{button.name}}
 
         button.settings__button-delete(
             :disabled="isDeleteDisabled"
-            @click="showConfirm" 
+            @click="showConfirmDelete" 
             data-button="delete" 
             ) Delete {{totalDeletedProducts}}
         
@@ -27,7 +27,7 @@
                 :preselect-first="false"
                 :allow-empty="false"
                 :disabled="!hasVisibleColumns"
-                @input="setProductsTotalVisible"
+                @input="changeProductsTotalVisible"
                 placeholder=""
             )
                 template(v-slot:singleLabel="{ option }")
@@ -36,7 +36,7 @@
         .settings__paging-nav
             button.settings__paging-button.settings__paging-button--prev(
                 :disabled="productFirstIndex === 0 || !hasVisibleColumns"
-                @click="setPageNumber"
+                @click="changePageNumber"
                 data-value="prev"
                 )
                 include ../assets/svg/prev.svg
@@ -48,7 +48,7 @@
 
             button.settings__paging-button.settings__paging-button--next(
                 :disabled="productLastIndex === productsTotal || !hasVisibleColumns"
-                @click="setPageNumber"
+                @click="changePageNumber"
                 data-value="next"
                 )
                 include ../assets/svg/next.svg
@@ -61,7 +61,7 @@
                 :searchable="false"
                 :close-on-select="false"
                 :showLabels="false"
-                @input="setColumnsVisible"
+                @input="changeColumnsVisible"
                 label="name",
                 track-by="value",
                 placeholder="Select columns"
@@ -77,7 +77,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapMutations, mapActions } from "vuex";
+import { mapState, mapGetters, mapActions } from "vuex";
 import Multiselect from "vue-multiselect";
 
 export default {
@@ -142,28 +142,27 @@ export default {
 		};
 	},
 	methods: {
-		...mapMutations([
-			"SET_PAGE_NUMBER",
-			"SET_PRODUCTS_TOTAL_VISIBLE",
-			"SET_FIRST_COLUMN",
-			"SET_COLUMNS_VISIBLE"
+		...mapActions([
+			"showConfirm",
+			"setFirstColumn",
+			"setColumnsVisible",
+			"setPageNumber",
+			"setProductsTotalVisible"
 		]),
-		...mapActions({ showConfirmDelete: "showConfirm" }),
-		showConfirm: function(e) {
-			this.showConfirmDelete({ event: e });
+		showConfirmDelete: function(e) {
+			this.showConfirm({ event: e });
 		},
-		setPageNumber: function(e) {
-			this.SET_PAGE_NUMBER(e.currentTarget.dataset.value);
+		changePageNumber: function(e) {
+			this.setPageNumber(e.currentTarget.dataset.value);
 		},
-		setProductsTotalVisible: function() {
-			this.SET_PRODUCTS_TOTAL_VISIBLE(this.productsTotalVisibleModel);
+		changeProductsTotalVisible: function() {
+			this.setProductsTotalVisible(this.productsTotalVisibleModel);
 		},
-		setFirstColumn: function(e) {
-			this.SET_FIRST_COLUMN(e.currentTarget.dataset.value);
+		changeFirstColumn: function(e) {
+			this.setFirstColumn(e.currentTarget.dataset.value);
 		},
 
-		setColumnsVisible: function() {
-			//TODO: refact ---- !!!!!! ??includes
+		changeColumnsVisible: function() {
 			let allIndex = this.columnsVisibleModel.findIndex(
 					item => item.value === "all"
 				),
@@ -202,7 +201,7 @@ export default {
 			let columnsValues = this.columnsVisibleModel.map(
 				item => item.value
 			);
-			this.SET_COLUMNS_VISIBLE(columnsValues);
+			this.setColumnsVisible(columnsValues);
 		}
 	}
 };

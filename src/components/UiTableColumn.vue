@@ -3,7 +3,7 @@
         td.table__td
             .table__checkbox(
                 :class="{'is-checked' : isChecked}"
-                @click="setDeletedProducts"
+                @click="changeDeletedProducts"
                 )
 
         td.table__td(
@@ -13,13 +13,13 @@
 
         td.table__td
             button.table__button-delete(
-                @click="showConfirm"
+                @click="showConfirmDelete"
                 data-button="delete"
                 ) delete
 </template>
 
 <script>
-import { mapState, mapMutations, mapGetters, mapActions } from "vuex";
+import { mapState, mapGetters, mapActions } from "vuex";
 
 export default {
 	name: "UiTableColumn",
@@ -32,18 +32,17 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(["SET_DELETED_PRODUCTS"]),
-		...mapActions({ showConfirmDelete: "showConfirm" }),
+		...mapActions(["showConfirm", "setDeletedProducts"]),
 
-		setDeletedProducts: function() {
-			let action = this.checked ? "remove" : "add";
-			this.SET_DELETED_PRODUCTS({
+		changeDeletedProducts: function() {
+			let action = this.isChecked ? "remove" : "add";
+			this.setDeletedProducts({
 				id: [this.product.id],
 				action: action
 			});
 		},
-		showConfirm: function(e) {
-			this.showConfirmDelete({ event: e, id: this.product.id });
+		showConfirmDelete: function(e) {
+			this.showConfirm({ event: e, id: this.product.id });
 		}
 	}
 };

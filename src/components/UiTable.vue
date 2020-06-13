@@ -11,7 +11,7 @@
                     v-for="item in productMatrixChecked"
                     :key="item.value"
                     :class="getColumnClass(item)"
-                    @click="reversSorting"
+                    @click="setSorting"
                     ) {{item.name}}
                 td.table__td.table__td--last
         tbody
@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapMutations } from "vuex";
+import { mapState, mapGetters, mapActions } from "vuex";
 import UiTableColumn from "./UiTableColumn.vue";
 
 export default {
@@ -39,25 +39,25 @@ export default {
 		])
 	},
 	methods: {
-		...mapMutations(["SET_DELETED_PRODUCTS", "REVERS_SORTING"]),
+		...mapActions(["setDeletedProducts", "reverseSorting"]),
 
 		checkedAll: function() {
 			let indexes = this.productsOnPage.map(item => item.id);
 			if (!this.isAllCheckToDelete) {
-				this.SET_DELETED_PRODUCTS({
+				this.setDeletedProducts({
 					id: indexes,
 					action: "add"
 				});
 			} else {
-				this.SET_DELETED_PRODUCTS({
+				this.setDeletedProducts({
 					id: indexes,
 					action: "remove"
 				});
 			}
 		},
-		reversSorting: function(e) {
+		setSorting: function(e) {
 			if (e.target.classList.contains("is-active")) {
-				this.REVERS_SORTING();
+				this.reverseSorting();
 			}
 		},
 		getColumnClass: function(item) {

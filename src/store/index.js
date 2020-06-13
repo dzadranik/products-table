@@ -148,6 +148,24 @@ export default new Vuex.Store({
 			state.isDeleting = !state.isDeleting
 		},
 
+		[SET_DELETED_PRODUCTS](state, value) {
+			//изменяет список продуктов для удаления
+			if (value.action === 'add') {
+				for (let i = 0; i < value.id.length; i++) {
+					if (!state.productsToDelete.includes(value.id[i])) {
+						state.productsToDelete.push(value.id[i])
+					}
+				}
+			} else if (value.action === 'remove') {
+				for (let i = 0; i < value.id.length; i++) {
+					let index = state.productsToDelete.findIndex(
+						(item) => item === value.id[i]
+					)
+					state.productsToDelete.splice(index, 1)
+				}
+			}
+		},
+
 		[SHOW_CONFIRM](state, value) {
 			// показать окно подтверждения
 			state.isConfirmShow = true
@@ -168,42 +186,6 @@ export default new Vuex.Store({
 
 		[REVERS_SORTING](state) {
 			state.isSortingReverse = !state.isSortingReverse
-		},
-		[SET_DELETED_PRODUCTS](state, value) {
-			//изменяет список продуктов для удаления
-			if (value.action === 'add') {
-				for (let i = 0; i < value.id.length; i++) {
-					if (!state.productsToDelete.includes(value.id[i])) {
-						state.productsToDelete.push(value.id[i])
-					}
-				}
-			} else if (value.action === 'remove') {
-				for (let i = 0; i < value.id.length; i++) {
-					let index = state.productsToDelete.findIndex(
-						(item) => item === value.id[i]
-					)
-					state.productsToDelete.splice(index, 1)
-				}
-			}
-		},
-		[SET_PAGE_NUMBER](state, value) {
-			//пагинация
-			if (
-				value === 'next' &&
-				state.pageNumber <
-					Math.ceil(
-						state.products.length / state.productsTotalVisible
-					) -
-						1
-			) {
-				state.pageNumber++
-			} else if (value === 'prev' && state.pageNumber > 0) {
-				state.pageNumber--
-			}
-		},
-		[SET_PRODUCTS_TOTAL_VISIBLE](state, value) {
-			//меняет количество продуктов на странице
-			state.productsTotalVisible = +value
 		},
 		[SET_FIRST_COLUMN](state, value) {
 			//меняет первую колонку таблицы
@@ -227,6 +209,25 @@ export default new Vuex.Store({
 				let isChecked = array.includes(product.value)
 				isChecked ? (product.checked = true) : (product.checked = false)
 			})
+		},
+		[SET_PAGE_NUMBER](state, value) {
+			//пагинация
+			if (
+				value === 'next' &&
+				state.pageNumber <
+					Math.ceil(
+						state.products.length / state.productsTotalVisible
+					) -
+						1
+			) {
+				state.pageNumber++
+			} else if (value === 'prev' && state.pageNumber > 0) {
+				state.pageNumber--
+			}
+		},
+		[SET_PRODUCTS_TOTAL_VISIBLE](state, value) {
+			//меняет количество продуктов на странице
+			state.productsTotalVisible = +value
 		},
 	},
 	actions: {
@@ -262,6 +263,9 @@ export default new Vuex.Store({
 			}
 			commit('SET_IS_DELETING')
 		},
+		setDeletedProducts({ commit }, value) {
+			commit('SET_DELETED_PRODUCTS', value)
+		},
 
 		showConfirm({ commit, state }, value) {
 			if (state.isConfirmShow === true) commit('RESET_CONFIRM')
@@ -270,6 +274,22 @@ export default new Vuex.Store({
 		hideConfirm({ commit }) {
 			commit('HIDE_CONFIRM')
 			commit('RESET_CONFIRM')
+		},
+
+		reverseSorting({ commit }) {
+			commit('REVERS_SORTING')
+		},
+		setFirstColumn({ commit }, value) {
+			commit('SET_FIRST_COLUMN', value)
+		},
+		setColumnsVisible({ commit }, value) {
+			commit('SET_COLUMNS_VISIBLE', value)
+		},
+		setPageNumber({ commit }, value) {
+			commit('SET_PAGE_NUMBER', value)
+		},
+		setProductsTotalVisible({ commit }) {
+			commit('SET_PRODUCTS_TOTAL_VISIBLE')
 		},
 	},
 })
