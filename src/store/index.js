@@ -288,8 +288,8 @@ export default new Vuex.Store({
 		setPageNumber({ commit }, value) {
 			commit('SET_PAGE_NUMBER', value)
 		},
-		setProductsTotalVisible({ commit }) {
-			commit('SET_PRODUCTS_TOTAL_VISIBLE')
+		setProductsTotalVisible({ commit }, value) {
+			commit('SET_PRODUCTS_TOTAL_VISIBLE', value)
 		},
 	},
 })
